@@ -11,6 +11,7 @@ export default function EditProfilePage() {
     bio: '',
     avatar_url: ''
   })
+  const [avatarFile, setAvatarFile] = useState(null)
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -33,6 +34,29 @@ export default function EditProfilePage() {
     loadProfile()
   }, [])
 
+  const uploadAvatar = async () => {
+    if (!avatarFile) return
+
+    const { data: { session } } = await supabase.auth.getSession()
+    const fileExt = avatarFile.name.split('.').pop()
+    const filePath = `${session.user.id}/avatar.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, avatarFile, { upsert: true })
+
+    if (uploadError) {
+      alert(uploadError.message)
+      return
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath)
+
+    setProfile({ ...profile, avatar_url: urlData.publicUrl })
+  }
+
   const updateProfile = async () => {
     setLoading(true)
 
@@ -43,6 +67,7 @@ export default function EditProfilePage() {
       username: profile.username,
       display_name: profile.display_name,
       bio: profile.bio,
+      avatar_url: profile.avatar_url,
       updated_at: new Date()
     }
 
@@ -59,6 +84,24 @@ export default function EditProfilePage() {
   return (
     <div style={{ padding: 20 }}>
       <h1>Edit Profile</h1>
+
+      {profile.avatar_url && (
+        <img
+          src={profile.avatar_url}
+          alt="Avatar"
+          style={{ width: 120, height: 120, borderRadius: '50%', marginBottom: 20 }}
+        />
+      )}
+
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setAvatarFile(e.target.files[0])}
+      />
+
+      <button onClick={uploadAvatar} style={{ marginTop: 10 }}>
+        Upload Avatar
+      </button>
 
       <label>Username</label>
       <input
