@@ -29,6 +29,10 @@ export default function ProfilePage() {
 
       <p><strong>Email:</strong> {session.user.email}</p>
 
+      <a href="/profile/edit" style={{ display: 'block', marginTop: 20 }}>
+  Edit Profile
+</a>
+
       <button onClick={handleLogout} style={{ marginTop: 20 }}>
         Logout
       </button>
