@@ -43,6 +43,17 @@ export default function LoginPage() {
         {loading ? 'Loading…' : 'Login'}
       </button>
 
+      <button
+  onClick={() =>
+    supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` }
+    })
+  }
+>
+  Continue with Google
+</button>
+
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
   )
