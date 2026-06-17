@@ -64,7 +64,7 @@ export default function UploadTrackPage() {
       coverUrl = coverUrlData.publicUrl
     }
 
-    // 3. Insert track into DB 
+      // 3. Insert track into DB 
       const { data: newTrack, error: insertError } = await supabase
         .from('tracks')
         .insert({
