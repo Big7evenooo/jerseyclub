@@ -64,26 +64,29 @@ export default function UploadTrackPage() {
       coverUrl = coverUrlData.publicUrl
     }
 
-    // 3. Insert track into DB
-    const { error: insertError } = await supabase
-      .from('tracks')
-      .insert({
-        user_id: userId,
-        title,
-        bpm: bpm ? Number(bpm) : null,
-        genre,
-        audio_url: audioUrlData.publicUrl,
-        cover_url: coverUrl
-      })
-
+    // 3. Insert track into DB 
+      const { data: newTrack, error: insertError } = await supabase
+        .from('tracks')
+        .insert({
+          user_id: userId,
+          title,
+          bpm: bpm ? Number(bpm) : null,
+          genre,
+          audio_url: audioUrlData.publicUrl,
+          cover_url: coverUrl
+        })
+        .select()
+        .single()
+        
     setLoading(false)
-
+      
     if (insertError) {
       alert(insertError.message)
     } else {
-      alert('Track uploaded!')
-      window.location.href = '/'
+      // Redirect to the new track page
+      window.location.href = `/track/${newTrack.id}`
     }
+    
   }
 
   return (
