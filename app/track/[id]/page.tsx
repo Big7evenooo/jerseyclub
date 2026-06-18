@@ -7,11 +7,31 @@ export default function TrackPage({ params }) {
   const [track, setTrack] = useState(null)
   const [uploader, setUploader] = useState(null)
   const [loading, setLoading] = useState(true)
-
+  const [comments, setComments] = useState([])
+  const [newComment, setNewComment] = useState('')
+  
   useEffect(() => {
     loadTrack()
   }, [])
 
+  const loadComments = async () => 
+    const { data } = await supabase
+    .from('comments')
+    .select(`
+      id,
+      text,
+      created_at,
+      profiles (
+        username,
+        avatar_url
+      )
+    `)
+    .eq('track_id', params.id)
+    .order('created_at', { ascending: true })
+
+  setComments(data || [])
+}
+  
   const loadTrack = async () => {
     // 1. Load track
     const { data: trackData } = await supabase
