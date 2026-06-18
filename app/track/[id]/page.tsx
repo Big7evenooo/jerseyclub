@@ -12,6 +12,7 @@ export default function TrackPage({ params }) {
   
   useEffect(() => {
     loadTrack()
+    loadComments()
   }, [])
 
   const loadComments = async () => 
