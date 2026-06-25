@@ -9,10 +9,13 @@ export default function TrackPage({ params }) {
   const [loading, setLoading] = useState(true)
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
-  
+  const [likes, setLikes] = useState(0)
+const [hasLiked, setHasLiked] = useState(false)
+
   useEffect(() => {
     loadTrack()
     loadComments()
+    loadLikes()
   }, [])
 
   const postComment = async () => {
@@ -51,7 +54,76 @@ export default function TrackPage({ params }) {
 
   setComments(data || [])
 }
-  
+
+  const loadLikes = async () => {
+  const { data: likeData } = await supabase
+    .from('likes')
+    .select('*')
+    .eq('track_id', params.id)
+
+  setLikes(likeData.length)
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+
+  const userLike = likeData.find(like => like.user_id === session.user.id)
+  setHasLiked(!!userLike)
+}
+
+  const toggleLike = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    alert('You must be logged in to like tracks')
+    return
+  }
+
+  if (hasLiked) {
+    // Unlike
+    await supabase
+      .from('likes')
+      .delete()
+      .eq('track_id', params.id)
+      .eq('user_id', session.user.id)
+  } else {
+    // Like
+    await supabase
+      .from('likes')
+      .insert({
+        track_id: params.id,
+        user_id: session.user.id
+      })
+  }
+
+  loadLikes()
+}  
+
+  const toggleLike = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    alert('You must be logged in to like tracks')
+    return
+  }
+
+  if (hasLiked) {
+    // Unlike
+    await supabase
+      .from('likes')
+      .delete()
+      .eq('track_id', params.id)
+      .eq('user_id', session.user.id)
+  } else {
+    // Like
+    await supabase
+      .from('likes')
+      .insert({
+        track_id: params.id,
+        user_id: session.user.id
+      })
+  }
+
+  loadLikes()
+}
+
   const loadTrack = async () => {
     // 1. Load track
     const { data: trackData } = await supabase
@@ -214,9 +286,26 @@ export default function TrackPage({ params }) {
 
       {/* Likes Section Placeholder */}
       <div style={{ marginTop: 20 }}>
-        <h2>Likes</h2>
-        <p>Likes will appear here.</p>
-      </div>
-    </div>
+  <h2>Likes</h2>
+
+  <button
+    onClick={toggleLike}
+    style={{
+      padding: '10px 20px',
+      borderRadius: 8,
+      background: hasLiked ? '#ff4d4d' : '#eee',
+      color: hasLiked ? 'white' : 'black',
+      border: 'none',
+      cursor: 'pointer'
+    }}
+  >
+    {hasLiked ? 'Unlike' : 'Like'}
+  </button>
+
+  <p style={{ marginTop: 10 }}>
+    {likes} {likes === 1 ? 'like' : 'likes'}
+  </p>
+</div>
+
   )
 }
