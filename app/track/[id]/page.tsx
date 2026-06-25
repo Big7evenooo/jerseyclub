@@ -15,6 +15,25 @@ export default function TrackPage({ params }) {
     loadComments()
   }, [])
 
+  const postComment = async () => {
+  if (!newComment.trim()) return
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    alert('You must be logged in to comment')
+    return
+  }
+
+  await supabase.from('comments').insert({
+    user_id: session.user.id,
+    track_id: params.id,
+    text: newComment
+  })
+
+  setNewComment('')
+  loadComments()
+}
+
   const loadComments = async () => 
     const { data } = await supabase
     .from('comments')
@@ -128,9 +147,70 @@ export default function TrackPage({ params }) {
 
       {/* Comments Section Placeholder */}
       <div style={{ marginTop: 40 }}>
-        <h2>Comments</h2>
-        <p>Comments will appear here.</p>
+  <h2>Comments</h2>
+
+  {/* Comment Input */}
+  <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+    <input
+      type="text"
+      placeholder="Write a comment…"
+      value={newComment}
+      onChange={(e) => setNewComment(e.target.value)}
+      style={{
+        flex: 1,
+        padding: 10,
+        borderRadius: 8,
+        border: '1px solid #ccc'
+      }}
+    />
+    <button onClick={postComment}>Post</button>
+  </div>
+
+  {/* Comments List */}
+  {comments.map((comment) => (
+    <div
+      key={comment.id}
+      style={{
+        display: 'flex',
+        gap: 12,
+        marginBottom: 20,
+        alignItems: 'flex-start'
+      }}
+    >
+      {/* Avatar */}
+      {comment.profiles?.avatar_url ? (
+        <img
+          src={comment.profiles.avatar_url}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            objectFit: 'cover'
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: '#ddd'
+          }}
+        />
+      )}
+
+      {/* Comment Content */}
+      <div>
+        <strong>{comment.profiles?.username || 'Unknown User'}</strong>
+        <p style={{ margin: '4px 0' }}>{comment.text}</p>
+        <small style={{ color: '#666' }}>
+          {new Date(comment.created_at).toLocaleString()}
+        </small>
       </div>
+    </div>
+  ))}
+</div>
+
 
       {/* Likes Section Placeholder */}
       <div style={{ marginTop: 20 }}>
