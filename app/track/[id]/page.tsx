@@ -10,12 +10,14 @@ export default function TrackPage({ params }) {
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
   const [likes, setLikes] = useState(0)
-const [hasLiked, setHasLiked] = useState(false)
+  const [hasLiked, setHasLiked] = useState(false)
+  const [plays, setPlays] = useState(0)
 
   useEffect(() => {
     loadTrack()
     loadComments()
     loadLikes()
+    loadPlays()
   }, [])
 
   const postComment = async () => {
@@ -65,6 +67,31 @@ const [hasLiked, setHasLiked] = useState(false)
 
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
+
+  const loadPlays = async () => {
+  const { data } = await supabase
+    .from('plays')
+    .select('*')
+    .eq('track_id', params.id)
+
+  setPlays(data.length)
+}
+
+    let hasCountedPlay = false
+
+  const incrementPlay = async () => {
+  if (hasCountedPlay) return
+  hasCountedPlay = true
+
+  const { data: { session } } = await supabase.auth.getSession()
+
+  await supabase.from('plays').insert({
+    track_id: params.id,
+    user_id: session?.user?.id || null
+  })
+
+  loadPlays()
+}
 
   const userLike = likeData.find(like => like.user_id === session.user.id)
   setHasLiked(!!userLike)
@@ -174,10 +201,11 @@ const [hasLiked, setHasLiked] = useState(false)
 
       {/* Audio Player */}
       <audio
-        controls
-        src={track.audio_url}
-        style={{ width: '100%', marginBottom: 20 }}
-      />
+  controls
+  src={track.audio_url}
+  onPlay={incrementPlay}
+  style={{ width: '100%', marginBottom: 20 }}
+/>
 
       {/* Uploader Info */}
       {uploader && (
@@ -216,6 +244,10 @@ const [hasLiked, setHasLiked] = useState(false)
         {track.genre && <p><strong>Genre:</strong> {track.genre}</p>}
         {track.bpm && <p><strong>BPM:</strong> {track.bpm}</p>}
       </div>
+      
+      <div style={{ marginTop: 10 }}>
+  <strong>{plays}</strong> {plays === 1 ? 'play' : 'plays'}
+</div>
 
       {/* Comments Section Placeholder */}
       <div style={{ marginTop: 40 }}>
