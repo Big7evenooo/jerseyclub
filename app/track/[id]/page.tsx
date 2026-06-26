@@ -12,12 +12,15 @@ export default function TrackPage({ params }) {
   const [likes, setLikes] = useState(0)
   const [hasLiked, setHasLiked] = useState(false)
   const [plays, setPlays] = useState(0)
-
+  const [reposts, setReposts] = useState(0)
+const [hasReposted, setHasReposted] = useState(false)
+  
   useEffect(() => {
     loadTrack()
     loadComments()
     loadLikes()
     loadPlays()
+    loadReposts()
   }, [])
 
   const postComment = async () => {
@@ -68,6 +71,48 @@ export default function TrackPage({ params }) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
 
+  const loadReposts = async () => {
+  const { data } = await supabase
+    .from('reposts')
+    .select('*')
+    .eq('track_id', params.id)
+
+  setReposts(data.length)
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+
+  const userRepost = data.find(r => r.user_id === session.user.id)
+  setHasReposted(!!userRepost)
+}
+
+  const toggleRepost = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    alert('You must be logged in to repost')
+    return
+  }
+
+  if (hasReposted) {
+    // Unrepost
+    await supabase
+      .from('reposts')
+      .delete()
+      .eq('track_id', params.id)
+      .eq('user_id', session.user.id)
+  } else {
+    // Repost
+    await supabase
+      .from('reposts')
+      .insert({
+        track_id: params.id,
+        user_id: session.user.id
+      })
+  }
+
+  loadReposts()
+}
+  
   const loadPlays = async () => {
   const { data } = await supabase
     .from('plays')
@@ -336,6 +381,28 @@ export default function TrackPage({ params }) {
 
   <p style={{ marginTop: 10 }}>
     {likes} {likes === 1 ? 'like' : 'likes'}
+  </p>
+</div>
+
+      <div style={{ marginTop: 20 }}>
+  <h2>Reposts</h2>
+
+  <button
+    onClick={toggleRepost}
+    style={{
+      padding: '10px 20px',
+      borderRadius: 8,
+      background: hasReposted ? '#4da6ff' : '#eee',
+      color: hasReposted ? 'white' : 'black',
+      border: 'none',
+      cursor: 'pointer'
+    }}
+  >
+    {hasReposted ? 'Unrepost' : 'Repost'}
+  </button>
+
+  <p style={{ marginTop: 10 }}>
+    {reposts} {reposts === 1 ? 'repost' : 'reposts'}
   </p>
 </div>
 
